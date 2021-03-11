@@ -18,8 +18,12 @@ import nl.siegmann.epublib.domain.MediaType
 import nl.siegmann.epublib.domain.Metadata
 import nl.siegmann.epublib.domain.Resource
 import nl.siegmann.epublib.epub.EpubWriter
+import nl.siegmann.epublib.service.MediatypeService.getMediaTypeByName
 import java.io.File
 import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLConnection
 import java.nio.charset.Charset
 
 
@@ -74,8 +78,26 @@ class CacheViewModel(application: Application) : BaseViewModel(application) {
 
             metadata.setLanguage("zh-CN")
 
+            // 根据URL 实例， 获取HttpURLConnection 实例
+            var httpURLConnection: URLConnection? = URL(book.getDisplayCover())
+                    .openConnection()
+            // 设置读取 和 连接 time out 时间
+            httpURLConnection?.readTimeout=2000
+
+            httpURLConnection?.connectTimeout = 2000
+            // 获取图片输入流
+            var inputStream = httpURLConnection?.inputStream
+            // 获取网络响应结果
+
+            val coverByte= inputStream?.readBytes()
+
+
+            if (httpURLConnection != null) {
+                epubBook.setCoverImage(Resource(coverByte,getMediaTypeByName(httpURLConnection.contentType)))
+            }
+
             // Add an Author
-            metadata.addAuthor(Author("aa","bb"))
+            metadata.addAuthor(Author(book.author))
             metadata.identifiers
             var feedNum = 1
 
